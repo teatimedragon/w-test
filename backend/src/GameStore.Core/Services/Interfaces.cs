@@ -14,6 +14,8 @@ public interface IEventService
     /// <summary>Throws NotFoundException when the event doesn't exist or has already started.</summary>
     Task<EventDto> GetUpcomingAsync(Guid eventId, CancellationToken ct = default);
     Task<CapacityDto> GetCapacityAsync(Guid eventId, CancellationToken ct = default);
+    /// <summary>An .ics file for the event: name, start and end (UTC, converted from the store time zone), store as location.</summary>
+    Task<CalendarFileDto> GetCalendarFileAsync(Guid eventId, CancellationToken ct = default);
     Task<EventDto> CreateAsync(Guid storeId, CreateEventRequest request, CancellationToken ct = default);
 }
 

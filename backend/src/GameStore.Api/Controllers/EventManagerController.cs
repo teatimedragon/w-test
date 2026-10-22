@@ -27,6 +27,14 @@ public sealed class EventManagerController(
     [HttpGet("events/{eventId:guid}/capacity")]
     public Task<CapacityDto> GetCapacity(Guid eventId, CancellationToken ct) => events.GetCapacityAsync(eventId, ct);
 
+    /// <summary>Downloads the event as an iCalendar file to add to Google Calendar or another calendar app.</summary>
+    [HttpGet("events/{eventId:guid}/calendar.ics")]
+    public async Task<IActionResult> GetCalendarFile(Guid eventId, CancellationToken ct)
+    {
+        var file = await events.GetCalendarFileAsync(eventId, ct);
+        return File(System.Text.Encoding.UTF8.GetBytes(file.Content), "text/calendar; charset=utf-8", file.FileName);
+    }
+
     /// <summary>ADD registers a player; REMOVE drops a registration. 409 Problem Details on a version conflict or a full event.</summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request, CancellationToken ct)

@@ -4,10 +4,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api'
 import { RegistrationPage } from '../pages/RegistrationPage'
-import { conflict, event, notFound, store } from './fixtures'
+import { conflict, event, notFound } from './fixtures'
 
 function renderPage(remainingCapacity = 18, versionId = 13) {
-  vi.spyOn(api, 'getStore').mockResolvedValue(store)
   vi.spyOn(api, 'getEvent').mockResolvedValue(event)
   vi.spyOn(api, 'getCapacity').mockResolvedValue({ remainingCapacity, versionId })
   render(
@@ -32,7 +31,7 @@ beforeEach(() => {
 })
 
 describe('RegistrationPage', () => {
-  it('shows the event, a QR link built from APP_BASE_URL, and a Google Calendar link', async () => {
+  it('shows the event, a QR link built from APP_BASE_URL, and an .ics calendar download', async () => {
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'Friday Night Magic' })).toBeInTheDocument()
@@ -41,11 +40,9 @@ describe('RegistrationPage', () => {
     expect(screen.getByRole('link', { name: url })).toHaveAttribute('href', url)
     expect(screen.getByTitle('QR code for this registration page')).toBeInTheDocument()
 
-    const calendar = new URL(screen.getByRole('link', { name: 'Add to Google Calendar' }).getAttribute('href')!)
-    expect(calendar.searchParams.get('text')).toBe('Friday Night Magic')
-    expect(calendar.searchParams.get('dates')).toBe('20261029T180000/20261029T210000')
-    expect(calendar.searchParams.get('ctz')).toBe('America/Los_Angeles')
-    expect(calendar.searchParams.get('details')).toContain('3 rounds best of 3')
+    const calendar = screen.getByRole('link', { name: 'Add to Google Calendar (.ics)' })
+    expect(calendar).toHaveAttribute('href', `/event-manager/events/${event.eventId}/calendar.ics`)
+    expect(calendar).toHaveAttribute('download')
   })
 
   it('disables Submit and shows "Event Full" when remainingCapacity is 0', async () => {
@@ -102,8 +99,7 @@ describe('RegistrationPage', () => {
   })
 
   it('shows "Event not found" for an unknown or past event', async () => {
-    vi.spyOn(api, 'getStore').mockResolvedValue(store)
-    vi.spyOn(api, 'getEvent').mockRejectedValue(notFound())
+      vi.spyOn(api, 'getEvent').mockRejectedValue(notFound())
     vi.spyOn(api, 'getCapacity').mockRejectedValue(notFound())
     render(
       <MemoryRouter initialEntries={['/registration/nope']}>

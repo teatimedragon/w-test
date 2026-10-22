@@ -86,6 +86,8 @@ export const api = {
     request<GameEvent>(`/event-manager/stores/${storeId}/events`, { method: 'POST', body: JSON.stringify(event) }),
   getEvent: (eventId: string) => request<GameEvent>(`/event-manager/events/${eventId}`),
   getCapacity: (eventId: string) => request<Capacity>(`/event-manager/events/${eventId}/capacity`),
+  /** Downloads the event as an .ics file (times converted from the store time zone, store as location). */
+  calendarFileUrl: (eventId: string) => `/event-manager/events/${eventId}/calendar.ics`,
   register: (eventId: string, versionId: number, name: string) =>
     request<AddResult>('/event-manager/register', {
       method: 'POST',

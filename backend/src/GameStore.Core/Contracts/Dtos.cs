@@ -29,6 +29,8 @@ public sealed record CreateEventRequest(
     string? PlayFormats,
     string? Details);
 
+public sealed record CalendarFileDto(string FileName, string Content);
+
 public sealed record CapacityDto(int RemainingCapacity, int VersionId);
 
 public static class RegisterActions
