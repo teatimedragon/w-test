@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: ./backend
+      target: runtime
+    ports:
+      - "5080:8080"
+
+  web:
+    build:
+      context: ./frontend
+      target: runtime
+    depends_on:
+      - api
+    environment:
+      # Public base URL used in QR codes and shareable registration links.
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+    ports:
+      - "8080:80"
