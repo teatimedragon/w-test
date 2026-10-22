@@ -80,7 +80,7 @@ The spec's flow, as implemented:
 | 409 response | `ProblemDetails` with `status`, `title`, `detail`, and extensions `reason`, `versionId`, `remainingCapacity`; content type `application/problem+json` | RFC 9457, as specified. |
 | Seeded store id | `0199f0a0-0000-7000-8000-000000000001` (a valid UUIDv7: version 7, RFC variant) | "Fixed, known value." |
 | New ids | `Guid.CreateVersion7()` for events and registrations | UUIDv7 as specified. |
-| Google Calendar link | Built in the browser: `dates` uses the store-local start/end and `ctz` is the store's IANA zone (from the Store API), so Google does the conversion. Details include the event details and the registration link | The spec says the service converts for the calendar link; passing `ctz` gives the same result without adding UTC fields to the event response shape. |
+| Calendar file (changed 2026-10-22) | The registration page's "Add to Google Calendar (.ics)" link downloads an iCalendar file from `GET /event-manager/events/{eventId}/calendar.ics` instead of opening a Google Calendar URL. The file has SUMMARY = event name, LOCATION = store name, and DTSTART/DTEND in UTC, converted by the service from the store-local date/time with the store's time zone (end = start + duration). DESCRIPTION carries game type, play formats and details; UID is stable per event so re-importing updates rather than duplicates | Peter asked for the link to save a .ics file with the event name, start and end times and the store as location. Building it on the server keeps the time-zone conversion in the service (as section 10 says) and lets Google Calendar, Apple Calendar and Outlook all import it. UTC times avoid needing a VTIMEZONE block. Started events return 404, like the other event endpoints |
 | Calendar time zone | FullCalendar is given `timeZone="UTC"` and the store-local times, so events display at their store-local wall-clock times whatever the admin's browser zone | Avoids a time-zone plugin; event times are always shown as store-local. |
 | End time display | The wizard and popups show the computed end time, with the date when it falls on the next day | "The computed end time is shown." |
 | APP_BASE_URL at runtime | The nginx container writes `config.js` (`window.__APP_CONFIG__`) from `APP_BASE_URL` at start-up | Vite env vars are baked in at build time; this lets the same image serve any base URL. Without it the app falls back to the page origin. |
@@ -96,7 +96,7 @@ The spec's flow, as implemented:
 
 ## 5. Test map
 
-Every business rule in section 4 and every endpoint in section 5 has at least one test named after it.
+Every business rule in section 4, every endpoint in section 5, and the calendar-file endpoint added later has at least one test named after it.
 
 ### Business rules (section 4)
 
@@ -119,6 +119,7 @@ Every business rule in section 4 and every endpoint in section 5 has at least on
 | eventMinimum informational | No behaviour to test beyond validation; the landing page shows it (`LandingPage` test) |
 | Event creation from template defaults; Capacity row initialized | `Event_creation_from_template_defaults_initializes_the_Capacity_row`; integration `Create_event_returns_201_with_the_created_event_and_initializes_capacity`; wizard tests |
 | Template create (highest + 1) and update | `Template_create_uses_highest_templateId_plus_1`, `Template_create_with_an_unknown_templateId_still_uses_highest_plus_1`, `Template_create_retries_when_another_create_took_the_id`, `Template_update_changes_the_existing_template`; integration `Put_template_*` |
+| Calendar file: name, store-local times converted to UTC, store as location | `CalendarFileTests.*`; integration `Get_calendar_file_downloads_an_ics_with_name_times_and_store_location`; `RegistrationPage` ".ics calendar download" |
 | Seed data | `SeedDataTests.*`; integration `List_templates_returns_the_four_seeded_templates` |
 
 ### Endpoints (section 5)
@@ -130,6 +131,7 @@ Every business rule in section 4 and every endpoint in section 5 has at least on
 | POST /event-manager/stores/{storeId}/events | `Create_event_returns_201_with_the_created_event_and_initializes_capacity` | `Create_event_with_invalid_fields_returns_400_with_field_errors`, `Create_event_for_unknown_store_returns_404` |
 | GET /event-manager/events/{eventId} | `Get_event_returns_the_event` | `Get_unknown_event_returns_404`, `Get_event_that_has_started_returns_404` |
 | GET /event-manager/events/{eventId}/capacity | `Create_event_returns_201_…_initializes_capacity` | `Get_capacity_for_unknown_event_returns_404` |
+| GET /event-manager/events/{eventId}/calendar.ics | `Get_calendar_file_downloads_an_ics_with_name_times_and_store_location` | `Get_calendar_file_for_unknown_event_returns_404`, `Calendar_file_for_event_that_already_started_is_not_found` |
 | POST /event-manager/register | `Register_ADD_returns_200_…`, `Register_REMOVE_returns_200_…` | `…VERSION_CONFLICT`, `…EVENT_FULL`, `Register_with_invalid_name_returns_400_…`, `Register_for_unknown_event_returns_404`, `Register_REMOVE_for_unknown_registration_returns_404`, `Malformed_json_returns_400` |
 | GET /event-manager/stores/{storeId}/templates | `List_templates_returns_the_four_seeded_templates` | `List_templates_for_unknown_store_returns_404` |
 | PUT /event-manager/stores/{storeId}/templates | `Put_template_without_templateId_creates_highest_plus_1`, `Put_template_with_existing_templateId_updates_it` | `Put_template_with_invalid_fields_returns_400_…`, `Put_template_for_unknown_store_returns_404` |
@@ -138,4 +140,5 @@ Every business rule in section 4 and every endpoint in section 5 has at least on
 
 - Verified with `docker compose up --build`, then a browser walkthrough: create an event through the wizard, see it on the calendar and open its popup, create a template, register a player from `/` and see the count change, and open a registration link for an unknown event ("Event not found").
 - Test results at the time of the first PR: backend 68 unit + 28 integration tests passing; frontend 22 component tests passing.
+- After the .ics change: backend 75 unit + 30 integration tests passing; frontend 22 component tests passing.
 - FullCalendar is pinned to v6 (`@fullcalendar/react`, `core`, `daygrid` 6.1.x). The v7 React package pulls in core v7, which doesn't match the v6 plugins.

@@ -3,9 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api, ApiError, describeError, type GameEvent } from '../lib/api'
 import { registrationUrl } from '../lib/config'
-import { formatEnd, formatLongDate, formatTime, googleCalendarUrl } from '../lib/format'
+import { formatEnd, formatLongDate, formatTime } from '../lib/format'
 import { registerWithRetry } from '../lib/registerWithRetry'
-import { useStore } from '../lib/useStore'
 
 type LoadState = { kind: 'loading' } | { kind: 'not-found' } | { kind: 'error'; message: string } | { kind: 'ready'; event: GameEvent }
 
@@ -14,7 +13,6 @@ export const UNSUCCESSFUL_MESSAGE = 'Registration unsuccessful, try again.'
 export function RegistrationPage() {
   const { eventId = '' } = useParams()
   const navigate = useNavigate()
-  const store = useStore()
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' })
   const [remaining, setRemaining] = useState(0)
   const [versionId, setVersionId] = useState(0)
@@ -122,12 +120,8 @@ export function RegistrationPage() {
           <p>Share this event:</p>
           <a href={url}>{url}</a>
           <p>
-            <a
-              href={googleCalendarUrl(event, store?.timeZone ?? 'America/Los_Angeles', [`Register: ${url}`])}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Add to Google Calendar
+            <a href={api.calendarFileUrl(event.eventId)} download>
+              Add to Google Calendar (.ics)
             </a>
           </p>
         </div>

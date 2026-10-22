@@ -44,6 +44,13 @@ public sealed class EventService(
         return new CapacityDto(capacity.RemainingCapacity, capacity.VersionId);
     }
 
+    public async Task<CalendarFileDto> GetCalendarFileAsync(Guid eventId, CancellationToken ct = default)
+    {
+        var evt = await GetUpcomingEventAsync(stores, events, clock, eventId, ct);
+        var store = await StoreService.GetRequiredAsync(stores, evt.StoreId, ct);
+        return new CalendarFileDto(CalendarFile.FileName(evt), CalendarFile.Build(evt, store, clock.GetUtcNow()));
+    }
+
     public async Task<EventDto> CreateAsync(Guid storeId, CreateEventRequest request, CancellationToken ct = default)
     {
         var store = await StoreService.GetRequiredAsync(stores, storeId, ct);

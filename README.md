@@ -28,7 +28,7 @@ Then open:
 | URL | What |
 | --- | --- |
 | http://localhost:8080/ | Upcoming events (players) |
-| http://localhost:8080/registration/{eventId} | Registration page for one event (linked from each event, and from its QR code) |
+| http://localhost:8080/registration/{eventId} | Registration page for one event (linked from each event, and from its QR code), with a QR code and an .ics calendar download |
 | http://localhost:8080/admin | Store events admin: Create Event, View Events, Manage Templates |
 | http://localhost:5080/store-manager/stores/0199f0a0-0000-7000-8000-000000000001 | The API directly |
 
@@ -98,6 +98,7 @@ All bodies are JSON with camelCase fields. Dates are `YYYY-MM-DD`, times `HH:mm`
 | POST | `/event-manager/stores/{storeId}/events` | Create event (201) |
 | GET | `/event-manager/events/{eventId}` | One upcoming event |
 | GET | `/event-manager/events/{eventId}/capacity` | `{ remainingCapacity, versionId }` |
+| GET | `/event-manager/events/{eventId}/calendar.ics` | iCalendar file for the event (name, start/end in UTC converted from the store time zone, store name as location), used by the registration page's "Add to Google Calendar (.ics)" link |
 | POST | `/event-manager/register` | `ADD` or `REMOVE`; 409 Problem Details with `reason` `VERSION_CONFLICT` or `EVENT_FULL` |
 | GET | `/event-manager/stores/{storeId}/templates` | Store's templates |
 | PUT | `/event-manager/stores/{storeId}/templates` | Create (no or unknown `templateId`) or update a template |

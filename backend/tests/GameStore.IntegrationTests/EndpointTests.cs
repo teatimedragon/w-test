@@ -120,6 +120,29 @@ public class EndpointTests : IDisposable
     public async Task Get_capacity_for_unknown_event_returns_404() =>
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/event-manager/events/{Guid.CreateVersion7()}/capacity")).StatusCode);
 
+    // GET /event-manager/events/{eventId}/calendar.ics
+
+    [Fact]
+    public async Task Get_calendar_file_downloads_an_ics_with_name_times_and_store_location()
+    {
+        var created = await _client.CreateEventAsync(Api.NewEvent("Friday Night Magic", daysFromToday: 7, time: "18:00"));
+
+        var response = await _client.GetAsync($"/event-manager/events/{created.EventId}/calendar.ics");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/calendar", response.Content.Headers.ContentType!.MediaType);
+        Assert.Equal("friday-night-magic.ics", response.Content.Headers.ContentDisposition!.FileName);
+        var ics = await response.Content.ReadAsStringAsync();
+        Assert.Contains("SUMMARY:Friday Night Magic\r\n", ics);
+        Assert.Contains("DTSTART:20261030T010000Z\r\n", ics); // 2026-10-29 18:00 PDT
+        Assert.Contains("DTEND:20261030T040000Z\r\n", ics);
+        Assert.Contains("LOCATION:Basic Game Store\r\n", ics);
+    }
+
+    [Fact]
+    public async Task Get_calendar_file_for_unknown_event_returns_404() =>
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/event-manager/events/{Guid.CreateVersion7()}/calendar.ics")).StatusCode);
+
     // POST /event-manager/register
 
     [Fact]

@@ -41,22 +41,3 @@ export function formatEnd(date: string, time: string, minutes: number): string {
   const t = formatTime(end.time)
   return end.date === date ? t : `${t} (${formatWeekday(end.date)}, ${formatMonth(end.date)} ${formatDay(end.date)})`
 }
-
-const compact = (date: string, time: string) => `${date.replaceAll('-', '')}T${time.replace(':', '')}00`
-
-/** Google Calendar "add event" link. Times are passed as store-local with ctz set to the store's zone. */
-export function googleCalendarUrl(
-  event: { name: string; date: string; time: string; duration: number; details: string },
-  timeZone: string,
-  extraDetails: string[] = [],
-): string {
-  const end = endOf(event.date, event.time, event.duration)
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: event.name,
-    dates: `${compact(event.date, event.time)}/${compact(end.date, end.time)}`,
-    ctz: timeZone,
-    details: [event.details, ...extraDetails].filter(Boolean).join('\n'),
-  })
-  return `https://calendar.google.com/calendar/render?${params}`
-}
